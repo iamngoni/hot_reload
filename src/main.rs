@@ -26,6 +26,9 @@ struct Args {
 }
 
 fn spawn_flutter_run(path: &str, extra: &[String]) -> std::io::Result<Child> {
+    println!("🚀 Launching flutter in: {}", path);
+    println!("🧩 With args: {:?}", extra);
+
     let mut cmd = Command::new("flutter");
     cmd.arg("run")
         .current_dir(path)
