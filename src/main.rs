@@ -1,5 +1,6 @@
 use clap::Parser;
 use notify::{Config, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use std::env;
 use std::io::Write;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
@@ -39,8 +40,35 @@ fn spawn_flutter_run(path: &str, extra: &[String]) -> std::io::Result<Child> {
     cmd.spawn()
 }
 
+fn find_flutter_project_root(start: &Path) -> Option<PathBuf> {
+    let mut current = start.to_path_buf();
+    loop {
+        if current.join("pubspec.yaml").exists() {
+            return Some(current);
+        }
+        if !current.pop() {
+            break;
+        }
+    }
+    None
+}
+
 fn main() -> notify::Result<()> {
     let args = Args::parse();
+
+    match env::current_dir() {
+        Ok(dir) => println!("📁 Current working directory: {}", dir.display()),
+        Err(e) => eprintln!("❌ Failed to get current directory: {}", e),
+    }
+
+    let cwd = std::env::current_dir().expect("Could not get current directory");
+    println!("📁 Current working directory: {}", cwd.display());
+
+    let project_root = find_flutter_project_root(&cwd)
+        .expect("❌ Could not find pubspec.yaml in any parent directory");
+
+    println!("🗂️  Flutter project root: {}", project_root.display());
+
     let (tx, rx) = channel();
 
     let mut watcher: RecommendedWatcher = Watcher::new(tx, Config::default())?;
